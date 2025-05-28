@@ -32,7 +32,9 @@ public class SpellBuilder
         "chaos",       // index 4
         "homing",      // index 5
         "knockback",   // index 6
-        "bounce",      // index 7
+        "bounce",
+        "haste",    
+        "pierce",  
     };
 
     public SpellBuilder()
@@ -66,10 +68,17 @@ public class SpellBuilder
         // wave 1: always a plain ArcaneBolt
         if (wave <= 1)
         {
-            Spell burst = new ArcaneBurst(owner);
-            if (catalog.TryGetValue("arcane_burst", out var baseJson))
-                burst.LoadAttributes(baseJson, vars);
-            return burst;
+            // Start with ArcaneBlast wrapped in HomingModifier
+            var bolt = new ArcaneBolt(owner);
+            if (catalog.TryGetValue("arcane_bolt", out var baseJson))
+                bolt.LoadAttributes(baseJson, vars);
+
+            var haste = new HasteModifier(bolt);
+            if (catalog.TryGetValue("haste", out var modJson))
+                haste.LoadAttributes(modJson, vars);
+
+            Debug.Log("Wave 1 starting with: HomingModifier + ArcaneBlast");
+            return haste;
         }
 
         // new local RNG for unpredictability
@@ -150,6 +159,8 @@ public class SpellBuilder
             case 5: return new HomingModifier(inner);
             case 6: return new KnockbackModifier(inner);
             case 7: return new BounceModifier(inner);
+            case 8: return new HasteModifier(inner);  
+            case 9: return new PiercingModifier(inner);
             default: return inner;
         }
     }

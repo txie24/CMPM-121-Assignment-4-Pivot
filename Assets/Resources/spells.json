@@ -104,7 +104,7 @@
        "name": "knockback",
        "description": "Applies knockback to the enemy hit.",
        "force": "20"
-    },
+   },
    "bounce": {
         "name": "bounce",
         "description": "Bounces to another enemy nearby, with decreased second knockback damage and increased speed.",
@@ -113,5 +113,16 @@
         "bounceCount": "2",
         "damage_multiplier": "0.5",
         "speedMultiplier ": "1.5",
+   },
+   "haste": {
+        "name": "hasted",
+        "description": "Temporarily boosts your movement speed for half second after casting.",
+        "speed_bonus": "5",
+        "duration": "0.5"
+    },
+    "piercing": {
+        "name": "piercing",
+        "description": "Projectiles pass through the first enemy they hit.",
+        "max_hits": "2"
 }
 }

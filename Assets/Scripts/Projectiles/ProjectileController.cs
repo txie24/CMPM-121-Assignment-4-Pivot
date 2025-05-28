@@ -1,4 +1,4 @@
-// File: Assets/Scripts/Spells/ProjectileController.cs
+﻿// File: Assets/Scripts/Spells/ProjectileController.cs
 
 using UnityEngine;
 using System;
@@ -9,7 +9,8 @@ public class ProjectileController : MonoBehaviour
     public float lifetime;
     public event Action<Hittable, Vector3> OnHit;
     public ProjectileMovement movement;
-    public bool piercing = false; // <-- Add piercing flag
+    public bool piercing = false;
+    public bool ignoreEnvironment = false;
 
     void Start()
     {
@@ -42,28 +43,34 @@ public class ProjectileController : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.CompareTag("projectile")) return;
+        if (collision.gameObject.CompareTag("projectile"))
+            return;
 
+        // if we hit a unit (enemy or player), always invoke damage
         if (collision.gameObject.CompareTag("unit"))
         {
             var ec = collision.gameObject.GetComponent<EnemyController>();
             if (ec != null && OnHit != null)
-            {
                 OnHit.Invoke(ec.hp, transform.position);
-            }
             else
             {
                 var pc = collision.gameObject.GetComponent<PlayerController>();
                 if (pc != null && OnHit != null)
-                {
                     OnHit.Invoke(pc.hp, transform.position);
-                }
             }
+
+            // destroy on unit‐hit only if not piercing
+            if (!piercing)
+                Destroy(gameObject);
+            return;
         }
 
-        if (!piercing) // <-- Only destroy if not piercing
+        // NON‐UNIT collision (walls, scenery):
+        // only skip destruction if ignoreEnvironment is true
+        if (!ignoreEnvironment)
             Destroy(gameObject);
     }
+
 
     public void SetLifetime(float lifetime)
     {

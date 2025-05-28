@@ -1,9 +1,10 @@
 // File: Assets/Scripts/Spells/Railgun.cs
+
 using UnityEngine;
-using System.Collections;                // for IEnumerator
-using System.Collections.Generic;       // for Dictionary<,>
-using System.Linq;                      // for Except()
-using Newtonsoft.Json.Linq;             // for JObject
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;                  // for Except() and ToList()
+using Newtonsoft.Json.Linq;         // for JObject
 
 public sealed class Railgun : Spell
 {
@@ -57,25 +58,44 @@ public sealed class Railgun : Spell
 
         damageExpr = j["damage"]["amount"].Value<string>();
         speedExpr = j["projectile"]["speed"].Value<string>();
+
         baseMana = RPNEvaluator.SafeEvaluateFloat(
-                               j["mana_cost"].Value<string>(),
-                               vars,
-                               10f);
+            j["mana_cost"].Value<string>(), vars, 10f);
         baseCooldown = RPNEvaluator.SafeEvaluateFloat(
-                               j["cooldown"].Value<string>(),
-                               vars,
-                               3f);
+            j["cooldown"].Value<string>(), vars, 3f);
 
         trajectory = j["projectile"]["trajectory"].Value<string>();
         projectileSprite = j["projectile"]["sprite"]?.Value<int>() ?? 0;
+
         lifetimeExpr = j["projectile"]["lifetime"]?.Value<string>() ?? "1";
     }
 
     protected override IEnumerator Cast(Vector3 from, Vector3 to)
     {
-        // 1) Capture final damage, speed, and lifetime
-        float dmg = Damage;
-        float spd = Speed;
+        // 1) snapshot existing projectiles
+        var before = Object
+            .FindObjectsByType<ProjectileController>(FindObjectsSortMode.None)
+            .ToList();
+
+        // 2) fire the railgun with built-in piercing
+        GameManager.Instance.projectileManager.CreatePiercingProjectile(
+            projectileSprite,
+            trajectory,
+            from,
+            (to - from).normalized,
+            Speed,
+            (hit, impactPos) =>
+            {
+                if (hit.team != owner.team)
+                {
+                    int amt = Mathf.RoundToInt(Damage);
+                    hit.Damage(new global::Damage(amt, global::Damage.Type.ARCANE));
+                    Debug.Log($"[{displayName}] Hit {hit.owner.name} for {amt} dmg");
+                }
+            }
+        );
+
+        // 3) capture new projectiles and apply lifetime + ignoreEnvironment
         float lifetime = RPNEvaluator.SafeEvaluateFloat(
             lifetimeExpr,
             new Dictionary<string, float> {
@@ -85,44 +105,14 @@ public sealed class Railgun : Spell
             1f
         );
 
-        Debug.Log(
-            $"[{displayName}] Casting ▶ dmg={dmg:F1}, spd={spd:F1}, " +
-            $"lifetime={lifetime:F1}, cooldown={Cooldown:F1}"
-        );
+        var after = Object
+            .FindObjectsByType<ProjectileController>(FindObjectsSortMode.None)
+            .ToList();
 
-        Vector3 direction = (to - from).normalized;
-
-        // 2) Snapshot existing projectiles
-        var before = Object.FindObjectsByType<ProjectileController>(
-            FindObjectsSortMode.None
-        ).ToList();
-
-        // 3) Fire a piercing shot
-        GameManager.Instance.projectileManager.CreatePiercingProjectile(
-            projectileSprite,
-            trajectory,
-            from,
-            direction,
-            spd,
-            (hit, impactPos) =>
-            {
-                if (hit.team != owner.team)
-                {
-                    int amount = Mathf.RoundToInt(dmg);
-                    var dmgObj = new global::Damage(amount, global::Damage.Type.ARCANE);
-                    hit.Damage(dmgObj);
-                    Debug.Log($"[{displayName}] Hit {hit.owner.name} for {amount} dmg");
-                }
-            }
-        );
-
-        // 4) Apply lifetime to the new projectile
-        var after = Object.FindObjectsByType<ProjectileController>(
-            FindObjectsSortMode.None
-        );
         foreach (var ctrl in after.Except(before))
         {
             ctrl.SetLifetime(lifetime);
+            ctrl.ignoreEnvironment = true;  // now walls won't stop it
         }
 
         yield return null;

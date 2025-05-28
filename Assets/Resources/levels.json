@@ -1,6 +1,20 @@
-[    
+[
+        {
+      "name": "UI Test",
+      "spawns": [
+        {
+          "enemy": "zombie",
+          "count": "0",
+          "hp": "base 5 wave * +",
+          "speed": "base wave +",
+          "delay": "0",
+          "sequence": [1, 2, 3],
+          "location": "random"
+        },
+      ]
+    },
     {
-      "name": "Test",
+      "name": "Game Test",
       "waves": 10,
       "spawns": [
         {
