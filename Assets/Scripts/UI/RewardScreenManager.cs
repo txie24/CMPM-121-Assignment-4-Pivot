@@ -134,7 +134,6 @@ public class RewardScreenManager : MonoBehaviour
         relicPanel?.SetActive(false);
 
         // only offer relics on wave 3, 6, 9, …
-        if (completedWave % 3 == 0)
         {
             ShowRelicReward();
         }

@@ -108,6 +108,33 @@
       "type": "gain-spellpower",
       "amount": "10",
       "until": "damage"
+    },
+    {
+    "name": "Healflower",
+    "sprite": 13,
+    "trigger": {
+      "description": "When you finish a wave",
+      "type": "end-wave"
+    },
+    "effect": {
+      "description": "restore 50% of your max HP",
+      "type": "heal-percent",
+      "amount": "0.5"
+    }
+  },
+  {
+    "name": "Eject Chute",
+    "sprite": 14,
+    "trigger": {
+      "description": "When you take damage",
+      "type": "take-damage"
+    },
+    "effect": {
+      "description": "gain 50% movement speed for 3 seconds",
+      "type": "speed-boost",
+      "amount": "1.5",
+      "duration": "3"
     }
   }
 ]
+
