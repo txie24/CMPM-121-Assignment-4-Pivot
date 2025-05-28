@@ -56,5 +56,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "CMPM-121-Assignment-4-Pivot.sln"
+    "dotnet.defaultSolution": "CMPM121asgn3.sln"
 }
