@@ -35,7 +35,7 @@
       "type": "take-damage"
     },
     "effect": {
-      "description": "your next spell gains 100 additional spellpower.",
+      "description": "your next spell gains 100 additional spellpower",
       "type": "gain-spellpower",
       "amount": "100",
       "until": "cast-spell"
@@ -49,7 +49,7 @@
       "type": "on-kill"
     },
     "effect": {
-      "description": "you gain 25 mana.",
+      "description": "you gain 25 mana",
       "type": "gain-mana",
       "amount": "25"
     }
@@ -62,9 +62,9 @@
       "type": "deal-damage"
     },
     "effect": {
-    "description": "you gain 10 HP",
-    "type": "gain-health",
-    "amount": "10"
+      "description": "you gain 10 HP",
+      "type": "gain-health",
+      "amount": "10"
     }
   },
   {
@@ -104,12 +104,13 @@
       "amount": "30"
     },
     "effect": {
-      "description": "you gain 10 spell power until you take damage",
+      "description": "you gain 10 spellpower until you take damage",
       "type": "gain-spellpower",
       "amount": "10",
       "until": "damage"
-    },
-    {
+    }
+  },
+  {
     "name": "Healflower",
     "sprite": 13,
     "trigger": {
@@ -118,7 +119,7 @@
     },
     "effect": {
       "description": "restore 50% of your max HP",
-      "type": "heal-percent",
+      "type": "gain-health",
       "amount": "0.5"
     }
   },
@@ -137,4 +138,3 @@
     }
   }
 ]
-

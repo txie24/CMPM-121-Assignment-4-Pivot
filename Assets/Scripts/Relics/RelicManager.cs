@@ -33,6 +33,8 @@ public class EffectData
     public string type;
     public string amount;
     public string until;
+    public string duration;
+
 }
 
 public class RelicManager : MonoBehaviour
