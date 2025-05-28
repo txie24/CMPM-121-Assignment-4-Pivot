@@ -21,6 +21,8 @@ public class SpellBuilder
         "magic_missile",
         "arcane_blast",
         "railgun",
+        "arcane_burst",
+
     };
     static readonly string[] ModifierKeys = {
         "splitter",    // index 0
@@ -64,10 +66,10 @@ public class SpellBuilder
         // wave 1: always a plain ArcaneBolt
         if (wave <= 1)
         {
-            Spell bolt = new ArcaneBolt(owner);
-            if (catalog.TryGetValue("arcane_bolt", out var baseJson))
-                bolt.LoadAttributes(baseJson, vars);
-            return bolt;
+            Spell burst = new ArcaneBurst(owner);
+            if (catalog.TryGetValue("arcane_burst", out var baseJson))
+                burst.LoadAttributes(baseJson, vars);
+            return burst;
         }
 
         // new local RNG for unpredictability
@@ -130,9 +132,11 @@ public class SpellBuilder
             case 2: return new MagicMissile(owner);
             case 3: return new ArcaneBlast(owner);
             case 4: return new Railgun(owner);
+            case 5: return new ArcaneBurst(owner); 
             default: return new ArcaneBolt(owner);
         }
     }
+
 
     private Spell ApplyRandomModifier(Spell inner, int i)
     {

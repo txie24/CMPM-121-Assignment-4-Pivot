@@ -49,6 +49,20 @@
        "cooldown": "10",
        "projectile": { "trajectory": "straight", "speed": "40", "sprite": 1,  "lifetime": "2" }
    },
+   "arcane_burst": {
+        "name": "Arcane Burst",
+        "description": "Fires a bolt that triggers an area explosion on impact.",
+        "icon": 11,
+        "damage": {
+            "amount": "30 power 2 / +","type": "arcane"
+    },
+        "mana_cost": "25",
+        "cooldown": "4",
+        "radius": "2.5",
+        "projectile": {
+            "trajectory": "straight","speed": "10","sprite": 0
+    }
+    },
    "damage_amp": {
        "name": "damage-amplified",
        "description": "Increased damage and increased mana cost.",
