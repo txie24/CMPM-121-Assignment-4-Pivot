@@ -65,21 +65,15 @@ public class SpellBuilder
             { "wave",  wave }
         };
 
-        // wave 1: always a plain ArcaneBolt
+        // -----------------------------------------wave 1: always a plain ArcaneBolt------------------------------------//
         if (wave <= 1)
         {
-            // Start with ArcaneBlast wrapped in HomingModifier
-            var bolt = new ArcaneBolt(owner);
+            Spell bolt = new ArcaneBolt(owner);
             if (catalog.TryGetValue("arcane_bolt", out var baseJson))
                 bolt.LoadAttributes(baseJson, vars);
-
-            var haste = new HasteModifier(bolt);
-            if (catalog.TryGetValue("haste", out var modJson))
-                haste.LoadAttributes(modJson, vars);
-
-            Debug.Log("Wave 1 starting with: HomingModifier + ArcaneBlast");
-            return haste;
+            return bolt;
         }
+        // -----------------------------------------wave 1: always a plain ArcaneBolt------------------------------------//
 
         // new local RNG for unpredictability
         System.Random localRng = new System.Random(
