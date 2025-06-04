@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Linq;
@@ -116,8 +116,19 @@ public class SpellUI : MonoBehaviour
             var img = icon.GetComponent<Image>();
             GameManager.Instance.spellIconManager.PlaceSprite(spell.IconIndex, img);
         }
+
+        // ★ NEW: update the Tooltip component on this same GameObject (or child):
+        var tooltip = GetComponent<Tooltip>();
+        if (tooltip != null)
+        {
+            // build whatever string you want—e.g. display name + modifiers
+            string msg = spell.DisplayName;
+            // if you want to list modifiers, you could loop through them here
+            tooltip.message = msg;
+        }
     }
-    
+
+
     public void DropSpell()
     {
         PlayerController playerController = Object.FindFirstObjectByType<PlayerController>();
