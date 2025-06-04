@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class PauseMenu : MonoBehaviour
@@ -13,7 +13,6 @@ public class PauseMenu : MonoBehaviour
 
     void Update()
     {
-        // Note: GetKeyDown (capital “K”)
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             if (isPaused)
@@ -25,7 +24,6 @@ public class PauseMenu : MonoBehaviour
 
     public void PauseGame()
     {
-        // Use the instance variable, not the class name
         pauseMenu.SetActive(true);
         Time.timeScale = 0f;
         isPaused = true;
