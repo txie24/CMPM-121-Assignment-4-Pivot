@@ -1,4 +1,3 @@
-// Assets/Scripts/HUD/RelicTooltipManager.cs
 
 using UnityEngine;
 using TMPro;
@@ -25,23 +24,19 @@ public class RelicTooltipManager : MonoBehaviour
         }
         Instance = this;
 
-        // Hide the tooltip panel at start
         if (tooltipBox != null)
             tooltipBox.SetActive(false);
     }
 
     private void Update()
     {
-        // Make the tooltip follow the mouse while it’s visible
         if (tooltipBox != null && tooltipBox.activeSelf)
         {
             tooltipBox.transform.position = Input.mousePosition;
         }
     }
 
-    /// <summary>
-    /// Sets the name/description text and shows the tooltip panel.
-    /// </summary>
+
     public void SetAndShow(string relicName, string relicDescription)
     {
         if (tooltipBox == null || nameText == null || descText == null)
@@ -56,9 +51,6 @@ public class RelicTooltipManager : MonoBehaviour
         tooltipBox.SetActive(true);
     }
 
-    /// <summary>
-    /// Hides the tooltip panel.
-    /// </summary>
     public void HideToolTip()
     {
         if (tooltipBox != null)
