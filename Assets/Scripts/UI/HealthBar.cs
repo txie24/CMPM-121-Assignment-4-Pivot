@@ -5,7 +5,8 @@ public class HealthBar : MonoBehaviour
 {
     [Header("Drag the 'slider' child (fill bar) here")]
     public GameObject slider;
-    // 'slider' should be the child GameObject (with a SpriteRenderer originally tinted green).
+    // 'slider' should be the child GameObject that has its own SpriteRenderer,
+    // originally tinted green in the inspector.
 
     private SpriteRenderer bgRenderer; // SpriteRenderer on THIS GameObject (originally red).
     private SpriteRenderer fgRenderer; // SpriteRenderer on the 'slider' child (originally green).
@@ -17,10 +18,10 @@ public class HealthBar : MonoBehaviour
 
     void Awake()
     {
-        // 1) Grab the SpriteRenderer from the parent (background bar).
+        // 1) Grab the SpriteRenderer for the parent (background, originally red).
         bgRenderer = GetComponent<SpriteRenderer>();
 
-        // 2) Grab the SpriteRenderer from the 'slider' child (fill bar).
+        // 2) Grab the SpriteRenderer for the 'slider' child (originally green).
         if (slider != null)
             fgRenderer = slider.GetComponent<SpriteRenderer>();
 
@@ -29,19 +30,22 @@ public class HealthBar : MonoBehaviour
 
         // 4) Immediately apply the correct palette for background + fill:
         ApplyColorScheme(lastKnownCB);
+
+        Debug.Log($"[HealthBar] Awake: ColorblindMode={lastKnownCB}");
     }
 
     void Update()
     {
-        // 1) If the saved PlayerPrefs value changes (you flip toggle mid‐game), reapply colors:
+        // 1) If PlayerPrefs flips mid‐game, reapply the palette:
         bool currentCB = ColorblindSettings.IsColorblindModeEnabled();
         if (currentCB != lastKnownCB)
         {
             lastKnownCB = currentCB;
             ApplyColorScheme(currentCB);
+            Debug.Log($"[HealthBar] Update: ColorblindMode changed → {currentCB}");
         }
 
-        // 2) If we have an assigned Hittable, update the size/position of 'slider':
+        // 2) If we have an assigned Hittable, update the slider size & position:
         if (hp != null)
         {
             float perc = hp.hp * 1.0f / hp.max_hp;
@@ -54,7 +58,7 @@ public class HealthBar : MonoBehaviour
     }
 
     /// <summary>
-    /// Call this from your spawn/init logic so this bar knows which Hittable to track.
+    /// Called by your spawning/initialization code so this bar knows which Hittable to track.
     /// </summary>
     public void SetHealth(Hittable hp)
     {
@@ -65,7 +69,7 @@ public class HealthBar : MonoBehaviour
     }
 
     /// <summary>
-    /// Resize & reposition the fill‐bar (slider) based on the percentage (0→1).
+    /// Resizes & repositions the fill‐bar (slider) based on the health percentage (0 → 1).
     /// </summary>
     private void UpdateSliderVisual(float perc)
     {
@@ -77,13 +81,13 @@ public class HealthBar : MonoBehaviour
     }
 
     /// <summary>
-    /// Switches between default (red/green) or CB‐friendly (orange/blue) palettes.
+    /// Switch between (red background + green fill) or (orange background + blue fill).
     /// </summary>
     private void ApplyColorScheme(bool isCBOn)
     {
         if (isCBOn)
         {
-            // Universal CB palette: background = orange (#F5A623), fill = blue (#4A90E2)
+            // CB palette: background = orange (#F5A623), fill = blue (#4A90E2)
             if (bgRenderer != null)
                 bgRenderer.color = new Color32(0xF5, 0xA6, 0x23, 0xFF);
             if (fgRenderer != null)
