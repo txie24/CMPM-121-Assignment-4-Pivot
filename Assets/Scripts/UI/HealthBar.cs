@@ -89,7 +89,7 @@ public class HealthBar : MonoBehaviour
         {
             // CB palette: background = orange (#F5A623), fill = blue (#4A90E2)
             if (bgRenderer != null)
-                bgRenderer.color = new Color32(0xF5, 0xA6, 0x23, 0xFF);
+                bgRenderer.color = new Color32(0xFC, 0x77, 0x12, 0xFF);
             if (fgRenderer != null)
                 fgRenderer.color = new Color32(0x4A, 0x90, 0xE2, 0xFF);
         }

@@ -5144,7 +5144,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1996280226}
   - component: {fileID: 1996280227}
-  - component: {fileID: 1996280228}
   - component: {fileID: 1996280229}
   m_Layer: 5
   m_Name: ColorblindToggle
@@ -5222,18 +5221,6 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 0
---- !u!114 &1996280228
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1996280225}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e8ff2a5488ed1e7459b2565c3b33371d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &1996280229
 MonoBehaviour:
   m_ObjectHideFlags: 0
