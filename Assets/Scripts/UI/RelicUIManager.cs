@@ -1,85 +1,77 @@
+﻿// Assets/Scripts/HUD/RelicUIManager.cs
+
 using UnityEngine;
+using UnityEngine.UI;
 
 public class RelicUIManager : MonoBehaviour
 {
-    public GameObject relicUIPrefab;
-    public PlayerController player;
+    public static RelicUIManager Instance;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    [Header("Drag your RelicSlot prefab here (must have an 'Icon' child with Image + RelicTooltip)")]
+    public GameObject relicSlotPrefab;
+
+    [Header("Drag the 'Content' Transform under Canvas→RelicUI here")]
+    public Transform contentParent;
+
+    private void Awake()
     {
-        Debug.Log("RelicUIManager: Initialized and ready");
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
-
-    /// <summary>
-    /// Add a relic through this manager (calls RelicUI.Instance)
-    /// </summary>
-    public void AddRelic(Relic relic)
-    {
-        if (RelicUI.Instance != null)
+        if (Instance != null && Instance != this)
         {
-            RelicUI.Instance.AddRelic(relic);
-            Debug.Log($"RelicUIManager: Forwarded relic '{relic.Name}' to RelicUI");
+            Destroy(this.gameObject);
+            return;
+        }
+        Instance = this;
+    }
+
+
+    /// <param name="relicName">e.g. "Green Gem"</param>
+    /// <param name="relicDescription">e.g. "Whenever you take damage, gain 5 mana"</param>
+    /// <param name="spriteIndex">Index used by your sprite manager to pick the correct icon</param>
+    public void AddRelicIcon(string relicName, string relicDescription, int spriteIndex)
+    {
+        if (relicSlotPrefab == null || contentParent == null)
+        {
+            Debug.LogError("[RelicUIManager] relicSlotPrefab or contentParent is not assigned in the Inspector.");
+            return;
+        }
+
+        GameObject newSlot = Instantiate(relicSlotPrefab, contentParent);
+
+        Transform iconTF = newSlot.transform.Find("Icon");
+        if (iconTF == null)
+        {
+            Debug.LogError("[RelicUIManager] Could not find child 'Icon' on the spawned RelicSlot prefab!");
+            return;
+        }
+
+        Image img = iconTF.GetComponent<Image>();
+        if (img != null)
+        {
+            GameManager.Instance.spellIconManager.PlaceSprite(spriteIndex, img);
         }
         else
         {
-            Debug.LogError("RelicUIManager: RelicUI.Instance is null! Make sure RelicUI component exists in scene.");
+            Debug.LogWarning("[RelicUIManager] 'Icon' child has no Image component.");
+        }
+
+        RelicTooltip tooltipComp = iconTF.GetComponent<RelicTooltip>();
+        if (tooltipComp != null)
+        {
+            tooltipComp.relicName = relicName;
+            tooltipComp.relicDescription = relicDescription;
+            Debug.Log($"[RelicUIManager] Assigned tooltip.relicName='{relicName}', relicDescription='{relicDescription}'");
+        }
+        else
+        {
+            Debug.LogWarning("[RelicUIManager] 'Icon' child is missing RelicTooltip component!");
         }
     }
-
-    /// <summary>
-    /// Remove a relic through this manager
-    /// </summary>
-    public void RemoveRelic(string relicName)
+    public void ClearAllRelicIcons()
     {
-        if (RelicUI.Instance != null)
+        if (contentParent == null) return;
+        foreach (Transform child in contentParent)
         {
-            RelicUI.Instance.RemoveRelic(relicName);
+            Destroy(child.gameObject);
         }
     }
-
-    /// <summary>
-    /// Clear all relics through this manager
-    /// </summary>
-    public void ClearAllRelics()
-    {
-        if (RelicUI.Instance != null)
-        {
-            RelicUI.Instance.ClearAllRelics();
-        }
-    }
-
-    [ContextMenu("Test Add Relic")]
-    public void TestAddRelic()
-    {
-        var testRelicData = new RelicData
-        {
-            name = "Debug Relic",
-            sprite = 0,
-            trigger = new TriggerData { type = "test" },
-            effect = new EffectData { type = "test" }
-        };
-
-        var testRelic = new Relic(testRelicData);
-        AddRelic(testRelic);
-
-        Debug.Log("RelicUIManager: Added test relic");
-    }
-
-    /*public void OnRelicPickup(Relic r)
-    {
-        // make a new Relic UI representation
-        GameObject rui = Instantiate(relicUIPrefab, transform);
-        rui.transform.localPosition = new Vector3(-450 + 40 * (player.relics.Count - 1), 0, 0);
-        RelicUI ruic = rui.GetComponent<RelicUI>();
-        ruic.player = player;
-        ruic.index = player.relics.Count - 1;
-        
-    }*/
 }

@@ -1,4 +1,4 @@
-﻿// Assets/Scripts/UI/RelicUI.cs
+﻿
 
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,7 +12,6 @@ public class RelicUI : MonoBehaviour
     [Tooltip("Drag in the 'Content' RectTransform under RelicUI (the HLayoutGroup).")]
     public Transform contentParent;
 
-    // internal bookkeeping
     private List<GameObject> activeIcons = new List<GameObject>();
     private List<string> displayedRelicIDs = new List<string>();
 
@@ -37,9 +36,6 @@ public class RelicUI : MonoBehaviour
         ClearAllRelics();
     }
 
-    /// <summary>
-    /// Call this to add a relic to the bar.
-    /// </summary>
     public void AddRelic(Relic relic)
     {
         if (relic == null)
@@ -55,9 +51,7 @@ public class RelicUI : MonoBehaviour
         CreateIconFor(relic);
     }
 
-    /// <summary>
-    /// Remove a relic by name.
-    /// </summary>
+
     public void RemoveRelic(string relicName)
     {
         int idx = displayedRelicIDs.IndexOf(relicName);
@@ -69,9 +63,7 @@ public class RelicUI : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Clears the entire bar.
-    /// </summary>
+
     public void ClearAllRelics()
     {
         foreach (var go in activeIcons)
@@ -82,12 +74,9 @@ public class RelicUI : MonoBehaviour
         displayedRelicIDs.Clear();
     }
 
-    /// <summary>
-    /// Instantiates only the 'Icon' child from your slot prefab and sets its sprite.
-    /// </summary>
+
     private void CreateIconFor(Relic relic)
     {
-        // 1) find the Icon template inside your prefab
         var iconTemplate = relicSlotPrefab.transform.Find("Icon");
         if (iconTemplate == null)
         {
@@ -95,11 +84,9 @@ public class RelicUI : MonoBehaviour
             return;
         }
 
-        // 2) instantiate just that Icon under your Content
         GameObject iconGO = Instantiate(iconTemplate.gameObject, contentParent);
         iconGO.name = $"RelicIcon_{relic.Name}";
 
-        // 3) grab & assign the sprite
         var img = iconGO.GetComponent<Image>();
         var mgr = GameManager.Instance?.relicIconManager;
         Sprite spr = mgr != null ? mgr.Get(relic.SpriteIndex) : null;
@@ -113,12 +100,22 @@ public class RelicUI : MonoBehaviour
         img.color = Color.white;
         img.preserveAspect = true;
 
-        // 4) optional: add a click callback
+        var tooltipComp = iconGO.GetComponent<RelicTooltip>();
+        if (tooltipComp != null)
+        {
+            tooltipComp.relicName = relic.Name;
+
+            tooltipComp.relicDescription = relic.EffectData.description;
+        }
+        else
+        {
+            Debug.LogWarning($"RelicUI: Icon for '{relic.Name}' is missing a RelicTooltip component!");
+        }
+
         var btn = iconGO.GetComponent<Button>() ?? iconGO.AddComponent<Button>();
         btn.onClick.RemoveAllListeners();
         btn.onClick.AddListener(() => Debug.Log($"Clicked relic {relic.Name}"));
 
-        // 5) track it for removal later
         activeIcons.Add(iconGO);
         displayedRelicIDs.Add(relic.Name);
 
