@@ -1,5 +1,4 @@
-﻿// Assets/Scripts/Levels/EnemySpawner.cs
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +7,6 @@ using UnityEngine.UI;
 
 public class EnemySpawner : MonoBehaviour
 {
-    // hooks for relics (and anything else)
     public static Action<int> OnWaveEnd;
     public static Action<GameObject> OnEnemyKilled;
 
@@ -27,9 +25,22 @@ public class EnemySpawner : MonoBehaviour
     private bool _waveInProgress = false;
     private bool isEndless => currentLevel != null && currentLevel.waves <= 0;
 
+    private Dictionary<int, Vector3> customWavePositions = new Dictionary<int, Vector3>
+    {
+        { 1, new Vector3(-230f, 230f, 0f) },
+        { 2, new Vector3(-101f, 237f, 0f) },
+        { 3, new Vector3(-66f, 303f, 0f) },
+        { 4, new Vector3(9f, 301f, 0f) },
+        { 5, new Vector3(11f, 240f, 0f) },
+        { 6, new Vector3(72f, 262f, 0f) },
+        { 7, new Vector3(157f, 274f, 0f) },
+        { 8, new Vector3(167f, 225f, 0f) },
+        { 9, new Vector3(231f, 224f, 0f) },
+        { 10, new Vector3(4f, -1f, 0f) },
+    };
+
     void Start()
     {
-        // build the level-select buttons
         for (int i = 0; i < GameManager.Instance.levelDefs.Count; i++)
         {
             var lvl = GameManager.Instance.levelDefs[i];
@@ -45,12 +56,10 @@ public class EnemySpawner : MonoBehaviour
         }
     }
 
-    // called by ChooseClassManager after you pick a class
     public void StartLevel(string levelName)
     {
         level_selector.gameObject.SetActive(false);
-        currentLevel = GameManager.Instance.levelDefs
-                         .FirstOrDefault(l => l.name == levelName);
+        currentLevel = GameManager.Instance.levelDefs.FirstOrDefault(l => l.name == levelName);
         if (currentLevel == null)
         {
             Debug.LogError($"StartLevel: '{levelName}' not found");
@@ -59,9 +68,7 @@ public class EnemySpawner : MonoBehaviour
 
         currentWave = 1;
 
-        // initialize player
-        var pc = GameManager.Instance.player
-                              .GetComponent<PlayerController>();
+        var pc = GameManager.Instance.player.GetComponent<PlayerController>();
         if (pc == null)
         {
             Debug.LogError("StartLevel: no PlayerController on player");
@@ -69,14 +76,10 @@ public class EnemySpawner : MonoBehaviour
         }
         pc.StartLevel();
 
-        // swap sprite based on chosen class
         string cls = ChooseClassManager.SelectedClass ?? "mage";
         int idx = PlayerClass.GetSpriteIndex(cls);
-        //Debug.Log($"[EnemySpawner] sprite idx={idx} for class='{cls}'");
 
-        // **explicitly find your child named "player sprite"**
-        var spriteGO = GameManager.Instance.player
-                            .transform.Find("player sprite");
+        var spriteGO = GameManager.Instance.player.transform.Find("player sprite");
         if (spriteGO == null)
         {
             Debug.LogError("StartLevel: could not find child named 'player sprite'");
@@ -87,16 +90,12 @@ public class EnemySpawner : MonoBehaviour
             if (sr == null)
                 Debug.LogError("StartLevel: 'player sprite' has no SpriteRenderer");
             else
-                sr.sprite = GameManager.Instance
-                              .playerSpriteManager
-                              .Get(idx);
+                sr.sprite = GameManager.Instance.playerSpriteManager.Get(idx);
         }
 
-        // begin spawning
         StartCoroutine(SpawnWave());
     }
 
-    // external UI calls this to go to next wave
     public void NextWave()
     {
         if (!_waveInProgress)
@@ -108,10 +107,8 @@ public class EnemySpawner : MonoBehaviour
         if (_waveInProgress) yield break;
         _waveInProgress = true;
 
-        // 1) scale player stats for this wave
         SafeScalePlayerForWave(currentWave);
 
-        // 2) 3-2-1 countdown
         GameManager.Instance.state = GameManager.GameState.COUNTDOWN;
         for (int i = 3; i > 0; i--)
         {
@@ -120,20 +117,16 @@ public class EnemySpawner : MonoBehaviour
         }
         GameManager.Instance.countdown = 0;
 
-        // 3) mark in-wave state
         GameManager.Instance.state = GameManager.GameState.INWAVE;
 
-        // 4) spawn all configured enemies
         int totalSpawned = 0;
         foreach (var s in currentLevel.spawns)
             yield return StartCoroutine(SpawnEnemies(s, c => totalSpawned += c));
 
         lastWaveEnemyCount = totalSpawned;
 
-        // 5) wait until all are dead
         yield return new WaitWhile(() => GameManager.Instance.enemy_count > 0);
 
-        // 6) check win in finite mode
         if (!isEndless && currentWave >= currentLevel.waves)
         {
             GameManager.Instance.playerWon = true;
@@ -142,12 +135,10 @@ public class EnemySpawner : MonoBehaviour
             yield break;
         }
 
-        // 7) wave-end: show rewards
         GameManager.Instance.state = GameManager.GameState.WAVEEND;
         GameManager.Instance.wavesCompleted++;
         OnWaveEnd?.Invoke(currentWave);
 
-        // 8) prep next
         currentWave++;
         _waveInProgress = false;
     }
@@ -170,12 +161,10 @@ public class EnemySpawner : MonoBehaviour
         var stats = PlayerClass.GetStatsForWave(ChooseClassManager.SelectedClass, wave);
 
         int baseHP = Mathf.RoundToInt(stats["health"]);
-        int bonus = pc.relicMaxHPBonus;              // <- grab your Titan’s Heart stacks
+        int bonus = pc.relicMaxHPBonus;
         int total = baseHP + bonus;
 
-        Debug.Log($"[EnemySpawner] wave={wave} baseHP={baseHP} + relicBonus={bonus} => totalHP={total}");
         pc.hp.SetMaxHP(total, true);
-
         pc.spellcaster.max_mana = Mathf.RoundToInt(stats["mana"]);
         pc.spellcaster.mana = pc.spellcaster.max_mana;
         pc.spellcaster.mana_reg = Mathf.RoundToInt(stats["mana_regeneration"]);
@@ -183,14 +172,11 @@ public class EnemySpawner : MonoBehaviour
         pc.speed = Mathf.RoundToInt(stats["speed"]);
         pc.healthui?.SetHealth(pc.hp);
         pc.manaui?.SetSpellCaster(pc.spellcaster);
-        Debug.Log($"[EnemySpawner] After wave {wave} scaling → HP = {pc.hp.hp}/{pc.hp.max_hp}");
-
     }
 
     private IEnumerator SpawnEnemies(Spawn spawn, Action<int> onComplete)
     {
-        var def = GameManager.Instance.enemyDefs
-                         .FirstOrDefault(e => e.name == spawn.enemy);
+        var def = GameManager.Instance.enemyDefs.FirstOrDefault(e => e.name == spawn.enemy);
         if (def == null)
         {
             onComplete?.Invoke(0);
@@ -199,17 +185,13 @@ public class EnemySpawner : MonoBehaviour
 
         var ivars = new Dictionary<string, int> { ["base"] = def.hp, ["wave"] = currentWave };
         int total = RPNEvaluator.SafeEvaluate(spawn.count, ivars, 0);
-        int hp = spawn.hp != null
-                      ? RPNEvaluator.SafeEvaluate(spawn.hp, ivars, def.hp)
-                      : def.hp;
+        int hp = spawn.hp != null ? RPNEvaluator.SafeEvaluate(spawn.hp, ivars, def.hp) : def.hp;
         float spd = spawn.speed != null
-                      ? RPNEvaluator.SafeEvaluate(spawn.speed,
-                          new Dictionary<string, int> { { "base", (int)def.speed }, { "wave", currentWave } },
-                          (int)def.speed)
-                      : def.speed;
+            ? RPNEvaluator.SafeEvaluate(spawn.speed, new Dictionary<string, int> { { "base", (int)def.speed }, { "wave", currentWave } }, (int)def.speed)
+            : def.speed;
         float delay = spawn.delay != null
-                      ? RPNEvaluator.SafeEvaluate(spawn.delay, ivars, 2)
-                      : 2f;
+            ? RPNEvaluator.SafeEvaluate(spawn.delay, ivars, 2)
+            : 2f;
 
         spd = Mathf.Clamp(spd, 1f, 20f);
         var seq = (spawn.sequence != null && spawn.sequence.Count > 0)
@@ -222,16 +204,25 @@ public class EnemySpawner : MonoBehaviour
             int batch = seq[seqIdx++ % seq.Count];
             for (int i = 0; i < batch && spawned < total; i++)
             {
-                var pt = PickSpawnPoint(spawn.location);
-                Vector3 spawnPos = FindValidSpawnPosition(pt.transform.position);
+                Vector3 spawnPos;
+
+                // ⬇️ CUSTOM SPAWN POSITION CHECK
+                if (customWavePositions.TryGetValue(currentWave, out Vector3 customPos))
+                {
+                    spawnPos = FindValidSpawnPosition(customPos);
+                }
+                else
+                {
+                    var pt = PickSpawnPoint(spawn.location);
+                    spawnPos = FindValidSpawnPosition(pt.transform.position);
+                }
+
                 var go = Instantiate(enemy, spawnPos, Quaternion.identity);
 
-                // set enemy sprite
                 var sr = go.GetComponent<SpriteRenderer>();
                 if (sr != null)
                     sr.sprite = GameManager.Instance.enemySpriteManager.Get(def.sprite);
 
-                // init health & speed
                 var ec = go.GetComponent<EnemyController>();
                 ec.hp = new Hittable(hp, Hittable.Team.MONSTERS, go);
                 ec.speed = Mathf.RoundToInt(spd);
@@ -247,11 +238,9 @@ public class EnemySpawner : MonoBehaviour
 
     private Vector3 FindValidSpawnPosition(Vector3 basePosition)
     {
-        // Try the base position first
         if (!IsPositionBlocked(basePosition))
             return basePosition;
 
-        // Try nearby positions with increasing distance
         for (float radius = 1f; radius <= 5f; radius += 0.5f)
         {
             for (int attempts = 0; attempts < 8; attempts++)
@@ -268,13 +257,11 @@ public class EnemySpawner : MonoBehaviour
             }
         }
 
-        // Fallback: return base position with small random offset
         return basePosition + (Vector3)UnityEngine.Random.insideUnitCircle * 0.5f;
     }
 
     private bool IsPositionBlocked(Vector3 position)
     {
-        // Check for colliders at this position (walls, other enemies, etc.)
         Collider2D hit = Physics2D.OverlapCircle(position, 0.4f);
         return hit != null && !hit.CompareTag("unit") && !hit.CompareTag("projectile");
     }
