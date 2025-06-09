@@ -124,5 +124,5 @@
         "name": "piercing",
         "description": "Projectiles pass through the first enemy they hit.",
         "max_hits": "2"
-}
+    }
 }

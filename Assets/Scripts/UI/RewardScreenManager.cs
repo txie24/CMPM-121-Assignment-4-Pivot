@@ -75,8 +75,8 @@ public class RewardScreenManager : MonoBehaviour
 
         if (acceptSpellButton != null)
             acceptSpellButton.onClick.AddListener(AcceptSpell);
-        if (nextWaveButton != null)
-            nextWaveButton.onClick.AddListener(OnNextWaveClicked);
+        //if (nextWaveButton != null)
+          //  nextWaveButton.onClick.AddListener(OnNextWaveClicked);
 
         prevState = GameManager.Instance.state;
 
@@ -128,7 +128,7 @@ public class RewardScreenManager : MonoBehaviour
         GenerateSpellReward();
         spellIcon?.gameObject.SetActive(true);
         acceptSpellButton.interactable = true;
-        nextWaveButton.interactable = true;
+        nextWaveButton.interactable = false;
 
         // hide relic panel to reset
         relicPanel?.SetActive(false);
@@ -254,8 +254,8 @@ public class RewardScreenManager : MonoBehaviour
         UpdatePlayerSpellUI();
 
         // show feedback instead of next-wave
-        acceptSpellButton.gameObject.SetActive(false);
-        spellAcquiredText?.gameObject.SetActive(true);
+        rewardUI?.SetActive(false);
+        relicPanel?.SetActive(false);
     }
 
     void UpdatePlayerSpellUI()

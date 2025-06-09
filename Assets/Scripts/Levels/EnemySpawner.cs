@@ -7,6 +7,8 @@ using UnityEngine.UI;
 
 public class EnemySpawner : MonoBehaviour
 {
+    public static EnemySpawner Instance { get; private set; }
+
     public static Action<int> OnWaveEnd;
     public static Action<GameObject> OnEnemyKilled;
 
@@ -55,7 +57,10 @@ public class EnemySpawner : MonoBehaviour
               .onClick.AddListener(ctrl.StartLevel);
         }
     }
-
+    void Awake()
+    {
+        Instance = this;
+    }
     public void StartLevel(string levelName)
     {
         level_selector.gameObject.SetActive(false);
@@ -279,4 +284,17 @@ public class EnemySpawner : MonoBehaviour
             ? SpawnPoints[UnityEngine.Random.Range(0, list.Count)]
             : SpawnPoints[UnityEngine.Random.Range(0, SpawnPoints.Length)];
     }
+
+    public void ForceStartWave(int wave)
+    {
+        if (_waveInProgress)
+        {
+            Debug.LogWarning("Tried to start a wave while another is in progress.");
+            return;
+        }
+
+        currentWave = wave;
+        StartCoroutine(SpawnWave());
+    }
+
 }

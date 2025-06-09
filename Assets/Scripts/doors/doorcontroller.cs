@@ -1,45 +1,69 @@
 using UnityEngine;
+using System.Collections;
 
 public class DoorController : MonoBehaviour
 {
-    [Tooltip("Door must be cleared before this one opens (optional)")]
+    public int nextWave = 1;
+    public int waveToOpen = 1;
     public DoorController prerequisiteDoor;
 
-    [Tooltip("Wave after which this door opens (automatically set by manager)")]
-    public int waveToOpen = 1;
+    private bool isOpen = false;
+    private bool triggered = false;
+    private Vector3 doorPosition;
+    private Transform player;
+    private float activateDistance = 1.5f;
 
-    private bool isCleared = false;
+    void OnEnable() => EnemySpawner.OnWaveEnd += OnWaveEnd;
+    void OnDisable() => EnemySpawner.OnWaveEnd -= OnWaveEnd;
 
-    void OnEnable()
+    void Start()
     {
-        EnemySpawner.OnWaveEnd += OnWaveEnd;
+        doorPosition = transform.position;
+        StartCoroutine(AssignPlayerWhenReady());
     }
 
-    void OnDisable()
+    IEnumerator AssignPlayerWhenReady()
     {
-        EnemySpawner.OnWaveEnd -= OnWaveEnd;
+        while (GameManager.Instance.player == null)
+            yield return null;
+
+        player = GameManager.Instance.player.transform;
     }
 
-    private void OnWaveEnd(int wave)
+    void Update()
     {
-        if (wave == waveToOpen)
+        if (!isOpen || triggered || player == null) return;
+
+        float dist = Vector3.Distance(player.position, doorPosition);
+        if (dist < activateDistance)
         {
-            TryOpenDoor();
+            triggered = true;
+            Debug.Log($"[Door] Player walked through door to wave {nextWave}");
+            EnemySpawner.Instance.ForceStartWave(nextWave);
         }
     }
 
-    public void TryOpenDoor()
+    void OnWaveEnd(int wave)
     {
-        if (GameManager.Instance.enemy_count == 0 &&
-            (prerequisiteDoor == null || prerequisiteDoor.isCleared))
+        if (wave >= waveToOpen && GameManager.Instance.enemy_count == 0 &&
+            (prerequisiteDoor == null || prerequisiteDoor.isOpen))
         {
             OpenDoor();
         }
     }
 
-    private void OpenDoor()
+    void OpenDoor()
     {
-        isCleared = true;
-        gameObject.SetActive(false);
+        isOpen = true;
+
+        var sr = GetComponent<SpriteRenderer>();
+        if (sr) sr.enabled = false;
+
+        var col = GetComponent<Collider2D>();
+        if (col) col.enabled = false;
+
+        Debug.Log("[Door] Door opened. Waiting for player to walk through.");
     }
+
+    public bool IsOpen => isOpen;
 }
