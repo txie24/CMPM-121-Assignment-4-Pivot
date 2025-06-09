@@ -38,7 +38,7 @@ public class EnemySpawner : MonoBehaviour
         { 7, new Vector3(157f, 274f, 0f) },
         { 8, new Vector3(167f, 225f, 0f) },
         { 9, new Vector3(231f, 224f, 0f) },
-        { 10, new Vector3(4f, -1f, 0f) },
+        { 10, new Vector3(271f, 225f, 0f) },
     };
 
     void Start()
