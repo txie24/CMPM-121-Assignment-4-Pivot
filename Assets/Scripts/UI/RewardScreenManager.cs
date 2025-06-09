@@ -29,7 +29,7 @@ public class RewardScreenManager : MonoBehaviour
 
     [Header("Buttons")]
     public Button acceptSpellButton;
-    public Button nextWaveButton;
+    public Button rejectSpellButton;
 
     [Header("Relic Reward UI")]
     [Tooltip("Parent panel containing the 3 relic slots")]
@@ -75,8 +75,8 @@ public class RewardScreenManager : MonoBehaviour
 
         if (acceptSpellButton != null)
             acceptSpellButton.onClick.AddListener(AcceptSpell);
-        //if (nextWaveButton != null)
-          //  nextWaveButton.onClick.AddListener(OnNextWaveClicked);
+        if (rejectSpellButton != null)
+          rejectSpellButton.onClick.AddListener(CloseRewardUI);
 
         prevState = GameManager.Instance.state;
 
@@ -128,7 +128,7 @@ public class RewardScreenManager : MonoBehaviour
         GenerateSpellReward();
         spellIcon?.gameObject.SetActive(true);
         acceptSpellButton.interactable = true;
-        nextWaveButton.interactable = false;
+        rejectSpellButton.interactable = true;
 
         // hide relic panel to reset
         relicPanel?.SetActive(false);
@@ -143,7 +143,13 @@ public class RewardScreenManager : MonoBehaviour
         rewardUI?.SetActive(true);
     }
 
-
+    void CloseRewardUI()
+    {
+        rewardUI?.SetActive(false);
+        relicPanel?.SetActive(false);
+        acceptSpellButton.interactable = false;
+        rejectSpellButton.interactable = false;
+    }
     void GenerateSpellReward()
     {
         if (playerSpellCaster == null && GameManager.Instance.player != null)
@@ -272,7 +278,7 @@ public class RewardScreenManager : MonoBehaviour
         rewardUI?.SetActive(false);
         relicPanel?.SetActive(false);
         acceptSpellButton.interactable = false;
-        nextWaveButton.interactable = false;
+        rejectSpellButton.interactable = false;
         spawner?.NextWave();
     }
 
