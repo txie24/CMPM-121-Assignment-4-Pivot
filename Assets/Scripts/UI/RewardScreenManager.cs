@@ -134,7 +134,6 @@ public class RewardScreenManager : MonoBehaviour
         relicPanel?.SetActive(false);
 
         // only offer relics on wave 3, 6, 9, …
-        if (completedWave % 3 == 0)
         {
             ShowRelicReward();
         }
@@ -223,45 +222,41 @@ public class RewardScreenManager : MonoBehaviour
             return;
         }
 
-        bool duplicate = false;
-        for (int i = 0; i < playerSpellCaster.spells.Count; i++)
+        // if it's not a duplicate, add it
+        bool duplicate = playerSpellCaster.spells
+            .Any(s => s?.DisplayName == offeredSpell.DisplayName);
+
+        if (!duplicate)
         {
-            if (playerSpellCaster.spells[i]?.DisplayName == offeredSpell.DisplayName)
+            int slot = -1;
+            for (int i = 0; i < 4; i++)
             {
-                duplicate = true;
-                Debug.Log($"Duplicate spell in slot {i}, skipping add.");
-                break;
+                if (i >= playerSpellCaster.spells.Count)
+                    playerSpellCaster.spells.Add(null);
+
+                if (playerSpellCaster.spells[i] == null)
+                {
+                    slot = i;
+                    break;
+                }
+            }
+
+            if (slot >= 0)
+            {
+                playerSpellCaster.spells[slot] = offeredSpell;
+                UpdatePlayerSpellUI();
+            }
+            else
+            {
+                Debug.Log("All spell slots full; cannot add new spell");
             }
         }
-        if (duplicate)
-        {
-            OnNextWaveClicked();
-            return;
-        }
 
-        int slot = -1;
-        for (int i = 0; i < 4; i++)
-        {
-            if (i >= playerSpellCaster.spells.Count)
-                playerSpellCaster.spells.Add(null);
-            if (playerSpellCaster.spells[i] == null)
-            {
-                slot = i;
-                break;
-            }
-        }
-        if (slot < 0)
-        {
-            Debug.Log("All spell slots full; cannot add new spell");
-            return;
-        }
+        // → only swap in “Spell Acquired!” text and hide the Accept button
+        acceptSpellButton.gameObject.SetActive(false);
+        spellAcquiredText.gameObject.SetActive(true);
 
-        playerSpellCaster.spells[slot] = offeredSpell;
-        UpdatePlayerSpellUI();
-
-        // show feedback instead of next-wave
-        rewardUI?.SetActive(false);
-        relicPanel?.SetActive(false);
+        // (no call to OnNextWaveClicked(), so the reward UI stays up)
     }
 
     void UpdatePlayerSpellUI()
