@@ -1,3 +1,4 @@
+// Assets/Scripts/Sounds/AudioManager.cs
 using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
@@ -107,17 +108,18 @@ public class AudioManager : MonoBehaviour
         musicSource.loop = true;
         musicSource.playOnAwake = false;
         musicSource.priority = 64;
-        musicSource.volume = musicVolume; // Remove masterVolume multiplication
+        musicSource.volume = musicVolume;
 
         sfxSource = gameObject.AddComponent<AudioSource>();
+        sfxSource.loop = false; // Ensure SFX don't loop
         sfxSource.playOnAwake = false;
         sfxSource.priority = 128;
-        sfxSource.volume = sfxVolume; // Remove masterVolume multiplication
+        sfxSource.volume = sfxVolume;
 
         uiSource = gameObject.AddComponent<AudioSource>();
         uiSource.playOnAwake = false;
         uiSource.priority = 200;
-        uiSource.volume = uiVolume; // Remove masterVolume multiplication
+        uiSource.volume = uiVolume;
 
         Debug.Log("[AudioManager] All AudioSources created successfully!");
     }
@@ -189,7 +191,6 @@ public class AudioManager : MonoBehaviour
         }
         catch (System.Exception e)
         {
-            // Silently ignore errors during cleanup
             if (enableDebugLogs && !isQuitting)
                 Debug.LogWarning($"[AudioManager] Error unsubscribing from events: {e.Message}");
         }
@@ -197,13 +198,12 @@ public class AudioManager : MonoBehaviour
 
     void CleanupAudioManager()
     {
-        if (isQuitting) return; // Avoid double cleanup
+        if (isQuitting) return;
 
         Debug.Log("[AudioManager] Cleaning up AudioManager");
 
         UnsubscribeFromEvents();
 
-        // Stop and cleanup audio sources
         if (musicSource != null)
         {
             musicSource.Stop();
@@ -220,7 +220,6 @@ public class AudioManager : MonoBehaviour
             uiSource = null;
         }
 
-        // Clear the singleton reference
         if (_instance == this)
         {
             _instance = null;
@@ -265,7 +264,6 @@ public class AudioManager : MonoBehaviour
 
     #region Public Methods
 
-    // SFX Methods - Uses SFX Volume Only
     public void PlaySFX(AudioClip clip, float volumeMultiplier = 1f)
     {
         if (isQuitting || !isInitialized)
@@ -300,7 +298,7 @@ public class AudioManager : MonoBehaviour
             }
         }
 
-        // SFX volume is controlled ONLY by sfxVolume (separate from music)
+        sfxSource.loop = false; // Safeguard against looping SFX
         float finalVolume = sfxVolume * volumeMultiplier;
         sfxSource.PlayOneShot(clip, finalVolume);
 
@@ -347,20 +345,18 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    // UI Sound Methods - Uses SFX Volume
     public void PlayButtonClick()
     {
         if (isQuitting) return;
-        PlaySFX(buttonClick);  // This will use SFX volume
+        PlaySFX(buttonClick);
     }
 
     public void PlayButtonHover()
     {
         if (isQuitting) return;
-        PlaySFX(buttonHover);  // This will use SFX volume
+        PlaySFX(buttonHover);
     }
 
-    // Music Methods - Uses Music Volume Only
     public void PlayMainMenuMusic()
     {
         if (isQuitting) return;
@@ -373,7 +369,7 @@ public class AudioManager : MonoBehaviour
 
         if (mainMenuMusic == null)
         {
-            Debug.Log("[AudioManager] mainMenuMusic is null");
+            Debug.LogError("[AudioManager] mainMenuMusic is null! Assign it in the AudioManager prefab.");
             return;
         }
 
@@ -383,9 +379,11 @@ public class AudioManager : MonoBehaviour
             CreateAudioSources();
         }
 
+        if (musicSource.clip == mainMenuMusic && musicSource.isPlaying) return;
+
         Debug.Log("[AudioManager] Playing Main Menu Music");
         musicSource.clip = mainMenuMusic;
-        musicSource.volume = musicVolume;  // Only use music volume
+        musicSource.volume = musicVolume;
         musicSource.Play();
     }
 
@@ -401,7 +399,7 @@ public class AudioManager : MonoBehaviour
 
         if (gameplayMusic == null)
         {
-            Debug.Log("[AudioManager] gameplayMusic is null");
+            Debug.LogError("[AudioManager] gameplayMusic is null! Assign it in the AudioManager prefab.");
             return;
         }
 
@@ -411,9 +409,11 @@ public class AudioManager : MonoBehaviour
             CreateAudioSources();
         }
 
+        if (musicSource.clip == gameplayMusic && musicSource.isPlaying) return;
+
         Debug.Log("[AudioManager] Playing Gameplay Music");
         musicSource.clip = gameplayMusic;
-        musicSource.volume = musicVolume;  // Only use music volume
+        musicSource.volume = musicVolume;
         musicSource.Play();
     }
 
@@ -426,18 +426,15 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    // Volume Update Method
     public void UpdateMusicVolume()
     {
         if (musicSource != null && musicSource.isActiveAndEnabled && !isQuitting)
         {
-            // Music volume is controlled ONLY by musicVolume (not masterVolume for separation)
             musicSource.volume = musicVolume;
             Debug.Log($"[AudioManager] Updated music volume to: {musicSource.volume:F2} ({Mathf.RoundToInt(musicVolume * 100)}%)");
         }
     }
 
-    // Enable/Disable Methods
     public void SetMusicEnabled(bool enabled)
     {
         musicEnabled = enabled;
@@ -451,7 +448,6 @@ public class AudioManager : MonoBehaviour
         else if (enabled)
         {
             Debug.Log("[AudioManager] Music enabled");
-            // Optionally restart music here if needed
         }
     }
 
@@ -471,16 +467,15 @@ public class AudioManager : MonoBehaviour
 
         try
         {
-            // Check if AudioManager is still valid before playing sounds
             if (this == null || !isActiveAndEnabled) return;
 
             if (target.team == Hittable.Team.PLAYER)
             {
-                PlaySFX(playerGotHit);  // Uses SFX volume
+                PlaySFX(playerGotHit);
             }
             else if (target.team == Hittable.Team.MONSTERS)
             {
-                PlaySFX(hitEnemy);  // Uses SFX volume
+                PlaySFX(hitEnemy);
             }
         }
         catch (System.Exception e)

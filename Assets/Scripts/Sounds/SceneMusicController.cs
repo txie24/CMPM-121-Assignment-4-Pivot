@@ -1,12 +1,9 @@
+// Assets/Scripts/Sounds/SceneMusicController.cs
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class SceneMusicController : MonoBehaviour
 {
-    [Header("Scene Settings")]
-    public bool isMainMenuScene = false;
-    public bool isGameplayScene = false;
-
     void Start()
     {
         Debug.Log($"[SceneMusicController] Scene started: {SceneManager.GetActiveScene().name}");
@@ -21,12 +18,14 @@ public class SceneMusicController : MonoBehaviour
             return;
         }
 
-        if (isMainMenuScene)
+        string currentScene = SceneManager.GetActiveScene().name;
+
+        if (currentScene == "Start")
         {
             Debug.Log("[SceneMusicController] Playing Main Menu Music");
             AudioManager.Instance.PlayMainMenuMusic();
         }
-        else if (isGameplayScene)
+        else if (currentScene == "Main")
         {
             Debug.Log("[SceneMusicController] Playing Gameplay Music");
             AudioManager.Instance.PlayGameplayMusic();
@@ -35,9 +34,6 @@ public class SceneMusicController : MonoBehaviour
 
     void OnDestroy()
     {
-        if (AudioManager.Instance != null)
-        {
-            AudioManager.Instance.StopMusic();
-        }
+        // No need to stop music here; let the AudioManager handle transitions.
     }
 }
