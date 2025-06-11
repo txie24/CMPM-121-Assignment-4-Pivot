@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using System;              // ← added for Action
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -17,7 +17,7 @@ public class SpellCaster : MonoBehaviour
     public int spellPower;
     public List<Spell> spells = new(4);
 
-    // ← new: fired after any spell finishes casting
+    // ← existing: fired after any spell finishes casting
     public static event Action OnSpellCast;
 
     void Awake()
@@ -54,12 +54,25 @@ public class SpellCaster : MonoBehaviour
 
         Debug.Log($"[SpellCaster] Slot {slot} -> Casting \"{s.DisplayName}\" (mana={mana}, cost={s.Mana})");
 
+        // ← NEW: Debug and play spell sound
+        Debug.Log($"[SpellCaster] About to play sound for spell: {s.DisplayName}");
+
+        if (AudioManager.Instance != null)
+        {
+            Debug.Log("[SpellCaster] AudioManager found, calling PlaySpellSFX");
+            AudioManager.Instance.PlaySpellSFX(s.DisplayName);
+        }
+        else
+        {
+            Debug.LogError("[SpellCaster] AudioManager.Instance is NULL!");
+        }
+
         mana -= Mathf.RoundToInt(s.Mana);
         s.lastCast = Time.time;
 
         yield return s.TryCast(from, to);
 
-        // ← new: notify one‐shot relics
+        // ← existing: notify one‑shot relics
         OnSpellCast?.Invoke();
     }
 }

@@ -1,0 +1,22 @@
+fileFormatVersion: 2
+guid: 0e754f4187601b54d93c47375a7d2013
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - mainMenuMusic: {fileID: 8300000, guid: 0f1ac4e5be2a38b46917be2aa51d7c01, type: 3}
+  - gameplayMusic: {fileID: 8300000, guid: 6481522128832404aa9af0aef644f845, type: 3}
+  - buttonHover: {fileID: 8300000, guid: 4dd525d4caf2e3f4984ac7a7bfe196b0, type: 3}
+  - buttonClick: {fileID: 8300000, guid: 267154f8203cdfc48b51d041c34c14ed, type: 3}
+  - arcaneBoltShoot: {fileID: 8300000, guid: 1e2293b4dc6f6ba42ba3c19673398759, type: 3}
+  - arcaneSprayShoot: {fileID: 8300000, guid: 53875b9e0ad61814295760bb02a180d4, type: 3}
+  - arcaneBlastShoot: {fileID: 8300000, guid: 19f00a61d0926ad429bc5158c354e1a3, type: 3}
+  - magicMissileShoot: {fileID: 8300000, guid: 259a5b11661720f45af846536c66d48a, type: 3}
+  - railgunShoot: {fileID: 8300000, guid: 6508b74ad2ccd7940921dc45855c85ea, type: 3}
+  - playerGotHit: {fileID: 8300000, guid: 6508b74ad2ccd7940921dc45855c85ea, type: 3}
+  - hitEnemy: {fileID: 8300000, guid: 6508b74ad2ccd7940921dc45855c85ea, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
