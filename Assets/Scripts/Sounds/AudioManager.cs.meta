@@ -13,8 +13,9 @@ MonoImporter:
   - arcaneBlastShoot: {fileID: 8300000, guid: 19f00a61d0926ad429bc5158c354e1a3, type: 3}
   - magicMissileShoot: {fileID: 8300000, guid: 259a5b11661720f45af846536c66d48a, type: 3}
   - railgunShoot: {fileID: 8300000, guid: 6508b74ad2ccd7940921dc45855c85ea, type: 3}
-  - playerGotHit: {fileID: 8300000, guid: 6508b74ad2ccd7940921dc45855c85ea, type: 3}
-  - hitEnemy: {fileID: 8300000, guid: 6508b74ad2ccd7940921dc45855c85ea, type: 3}
+  - arcaneBurstShoot: {fileID: 8300000, guid: c5dba23bfd250424a98295e0dbcacc46, type: 3}
+  - playerGotHit: {fileID: 8300000, guid: 73af0c31dfcf4a74ba77560e9e33f2da, type: 3}
+  - hitEnemy: {fileID: 8300000, guid: 527c1c34b9c2a054f9f7fe1f2b6d5df6, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

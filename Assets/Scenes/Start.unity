@@ -1903,6 +1903,52 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 389443521}
   m_CullTransparentMesh: 1
+--- !u!1 &475559802
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 475559804}
+  - component: {fileID: 475559803}
+  m_Layer: 0
+  m_Name: MusicManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &475559803
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 475559802}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 58c7d3877d99a304987d4d787d391dc2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isMainMenuScene: 1
+  isGameplayScene: 0
+--- !u!4 &475559804
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 475559802}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &476262660
 GameObject:
   m_ObjectHideFlags: 0
@@ -6054,8 +6100,9 @@ MonoBehaviour:
   arcaneBlastShoot: {fileID: 8300000, guid: 19f00a61d0926ad429bc5158c354e1a3, type: 3}
   magicMissileShoot: {fileID: 8300000, guid: 259a5b11661720f45af846536c66d48a, type: 3}
   railgunShoot: {fileID: 8300000, guid: 6508b74ad2ccd7940921dc45855c85ea, type: 3}
-  playerGotHit: {fileID: 8300000, guid: 6508b74ad2ccd7940921dc45855c85ea, type: 3}
-  hitEnemy: {fileID: 8300000, guid: 6508b74ad2ccd7940921dc45855c85ea, type: 3}
+  arcaneBurstShoot: {fileID: 8300000, guid: c5dba23bfd250424a98295e0dbcacc46, type: 3}
+  playerGotHit: {fileID: 8300000, guid: 73af0c31dfcf4a74ba77560e9e33f2da, type: 3}
+  hitEnemy: {fileID: 8300000, guid: 527c1c34b9c2a054f9f7fe1f2b6d5df6, type: 3}
   masterVolume: 1
   musicVolume: 0.7
   sfxVolume: 0.8
@@ -6798,6 +6845,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1960322530}
   - component: {fileID: 1960322531}
+  - component: {fileID: 1960322532}
   m_Layer: 5
   m_Name: SoundToggle
   m_TagString: Untagged
@@ -6874,6 +6922,18 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 1
+--- !u!114 &1960322532
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1960322529}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f088c010b8b43c4a8f210d32b2434f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1993752996
 GameObject:
   m_ObjectHideFlags: 0
@@ -6942,6 +7002,7 @@ GameObject:
   - component: {fileID: 1996280226}
   - component: {fileID: 1996280227}
   - component: {fileID: 1996280229}
+  - component: {fileID: 1996280230}
   m_Layer: 5
   m_Name: ColorblindToggle
   m_TagString: Untagged
@@ -7028,6 +7089,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1e74ea3046c79674883775be3b8c5a40, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1996280230
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1996280225}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f088c010b8b43c4a8f210d32b2434f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &2129682048
@@ -7311,3 +7384,4 @@ SceneRoots:
   - {fileID: 1246827590}
   - {fileID: 54582403}
   - {fileID: 1627260090}
+  - {fileID: 475559804}

@@ -34,7 +34,7 @@ public class SpellBuilder
         "knockback",   // index 6
         "bounce",
         "haste",    
-        "pierce",  
+        "piercing",  
     };
 
     public SpellBuilder()

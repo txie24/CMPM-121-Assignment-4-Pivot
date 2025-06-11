@@ -11,12 +11,9 @@ public class AudioManager : MonoBehaviour
         {
             if (_instance == null)
             {
-                // Try to find existing AudioManager first
                 _instance = FindFirstObjectByType<AudioManager>();
-
                 if (_instance == null)
                 {
-                    // Auto-create AudioManager if it doesn't exist
                     Debug.Log("[AudioManager] Instance not found, creating new AudioManager");
                     GameObject go = new GameObject("AudioManager");
                     _instance = go.AddComponent<AudioManager>();
@@ -41,6 +38,7 @@ public class AudioManager : MonoBehaviour
     public AudioClip arcaneBlastShoot;
     public AudioClip magicMissileShoot;
     public AudioClip railgunShoot;
+    public AudioClip arcaneBurstShoot;
 
     [Header("Combat Sound Effects")]
     public AudioClip playerGotHit;
@@ -55,7 +53,6 @@ public class AudioManager : MonoBehaviour
     [Header("Debug")]
     public bool enableDebugLogs = true;
 
-    // PRIVATE - AudioSources created automatically
     private AudioSource musicSource;
     private AudioSource sfxSource;
     private AudioSource uiSource;
@@ -67,7 +64,6 @@ public class AudioManager : MonoBehaviour
 
     void Awake()
     {
-        // Handle singleton properly
         if (_instance == null)
         {
             _instance = this;
@@ -87,15 +83,12 @@ public class AudioManager : MonoBehaviour
         if (isInitialized) return;
 
         Debug.Log("[AudioManager] Initializing AudioManager");
-
         CreateAudioSources();
         InitializeSpellSounds();
         LoadAudioSettings();
-
         isInitialized = true;
         Debug.Log("[AudioManager] AudioManager fully initialized!");
 
-        // Subscribe to events after initialization
         StartCoroutine(DelayedEventSubscription());
     }
 
@@ -103,20 +96,17 @@ public class AudioManager : MonoBehaviour
     {
         Debug.Log("[AudioManager] Creating AudioSources");
 
-        // MUSIC SOURCE
         musicSource = gameObject.AddComponent<AudioSource>();
         musicSource.loop = true;
         musicSource.playOnAwake = false;
         musicSource.priority = 64;
         musicSource.volume = musicVolume * masterVolume;
 
-        // SFX SOURCE  
         sfxSource = gameObject.AddComponent<AudioSource>();
         sfxSource.playOnAwake = false;
         sfxSource.priority = 128;
         sfxSource.volume = sfxVolume * masterVolume;
 
-        // UI SOURCE
         uiSource = gameObject.AddComponent<AudioSource>();
         uiSource.playOnAwake = false;
         uiSource.priority = 200;
@@ -129,7 +119,6 @@ public class AudioManager : MonoBehaviour
     {
         Debug.Log("[AudioManager] Initializing spell sounds dictionary");
 
-        // Use the inspector-assigned clips directly
         spellSounds = new Dictionary<string, AudioClip>
         {
             { "Arcane Bolt", arcaneBoltShoot },
@@ -137,10 +126,9 @@ public class AudioManager : MonoBehaviour
             { "Arcane Blast", arcaneBlastShoot },
             { "Magic Missile", magicMissileShoot },
             { "Railgun", railgunShoot },
-            { "Arcane Burst", arcaneBlastShoot } // Use arcane blast sound for arcane burst
+            { "Arcane Burst", arcaneBurstShoot }
         };
 
-        // Debug what sounds are assigned
         Debug.Log("[AudioManager] Spell sound assignments:");
         foreach (var kvp in spellSounds)
         {
@@ -148,7 +136,6 @@ public class AudioManager : MonoBehaviour
             Debug.Log($"  - '{kvp.Key}' -> {(hasSound ? $"ASSIGNED {kvp.Value.name}" : "NULL")}");
         }
 
-        // Count how many sounds are properly assigned
         int assignedCount = 0;
         foreach (var kvp in spellSounds)
         {
@@ -195,22 +182,65 @@ public class AudioManager : MonoBehaviour
         }
         catch (System.Exception e)
         {
-            Debug.LogWarning($"[AudioManager] Error unsubscribing from events: {e.Message}");
+            // Silently ignore errors during cleanup
+            if (enableDebugLogs)
+                Debug.LogWarning($"[AudioManager] Error unsubscribing from events: {e.Message}");
         }
     }
 
     void OnDestroy()
     {
         UnsubscribeFromEvents();
+
+        // Stop all audio sources before destroying
+        if (musicSource != null)
+        {
+            musicSource.Stop();
+            musicSource = null;
+        }
+        if (sfxSource != null)
+        {
+            sfxSource.Stop();
+            sfxSource = null;
+        }
+        if (uiSource != null)
+        {
+            uiSource.Stop();
+            uiSource = null;
+        }
+
         if (_instance == this)
             _instance = null;
+    }
+
+    void OnApplicationPause(bool pauseStatus)
+    {
+        if (pauseStatus && musicSource != null)
+        {
+            musicSource.Pause();
+        }
+        else if (!pauseStatus && musicSource != null)
+        {
+            musicSource.UnPause();
+        }
+    }
+
+    void OnApplicationFocus(bool hasFocus)
+    {
+        if (!hasFocus && musicSource != null)
+        {
+            musicSource.Pause();
+        }
+        else if (hasFocus && musicSource != null)
+        {
+            musicSource.UnPause();
+        }
     }
 
     #region Public Methods
 
     public void PlaySFX(AudioClip clip, float volumeMultiplier = 1f)
     {
-        // Ensure we're initialized
         if (!isInitialized)
         {
             Debug.LogWarning("[AudioManager] Not initialized yet, initializing now");
@@ -264,7 +294,6 @@ public class AudioManager : MonoBehaviour
             return;
         }
 
-        // Extract base spell name (remove modifiers)
         string baseSpellName = ExtractBaseSpellName(spellName);
 
         if (enableDebugLogs) Debug.Log($"[AudioManager] Looking for spell sound: '{spellName}' -> base: '{baseSpellName}'");
@@ -285,7 +314,6 @@ public class AudioManager : MonoBehaviour
         {
             Debug.LogWarning($"[AudioManager] ERROR: No sound mapping found for spell: {baseSpellName}");
 
-            // List all available spell sounds for debugging
             Debug.Log("[AudioManager] Available spell sounds:");
             foreach (var kvp in spellSounds)
             {
@@ -311,6 +339,81 @@ public class AudioManager : MonoBehaviour
         PlaySFX(buttonHover);
     }
 
+    // === NEW MUSIC METHODS ===
+    public void PlayMainMenuMusic()
+    {
+        if (!isInitialized)
+        {
+            Debug.LogWarning("[AudioManager] Not initialized yet, initializing now");
+            Initialize();
+        }
+
+        if (!musicEnabled || mainMenuMusic == null)
+        {
+            Debug.Log("[AudioManager] Music disabled or mainMenuMusic is null");
+            return;
+        }
+
+        if (musicSource == null)
+        {
+            Debug.LogError("[AudioManager] musicSource is null, recreating AudioSources");
+            CreateAudioSources();
+        }
+
+        Debug.Log("[AudioManager] Playing Main Menu Music");
+        musicSource.clip = mainMenuMusic;
+        musicSource.volume = musicVolume * masterVolume;
+        musicSource.Play();
+    }
+
+    public void PlayGameplayMusic()
+    {
+        if (!isInitialized)
+        {
+            Debug.LogWarning("[AudioManager] Not initialized yet, initializing now");
+            Initialize();
+        }
+
+        if (!musicEnabled || gameplayMusic == null)
+        {
+            Debug.Log("[AudioManager] Music disabled or gameplayMusic is null");
+            return;
+        }
+
+        if (musicSource == null)
+        {
+            Debug.LogError("[AudioManager] musicSource is null, recreating AudioSources");
+            CreateAudioSources();
+        }
+
+        Debug.Log("[AudioManager] Playing Gameplay Music");
+        musicSource.clip = gameplayMusic;
+        musicSource.volume = musicVolume * masterVolume;
+        musicSource.Play();
+    }
+
+    public void StopMusic()
+    {
+        if (musicSource != null && musicSource.isActiveAndEnabled)
+        {
+            Debug.Log("[AudioManager] Stopping music");
+            musicSource.Stop();
+        }
+    }
+
+    public void SetMusicEnabled(bool enabled)
+    {
+        musicEnabled = enabled;
+        Debug.Log($"[AudioManager] Music enabled set to: {enabled}");
+
+        if (!enabled && musicSource != null)
+        {
+            musicSource.Stop();
+        }
+
+        SaveAudioSettings();
+    }
+
     #endregion
 
     #region Event Handlers
@@ -319,6 +422,9 @@ public class AudioManager : MonoBehaviour
     {
         try
         {
+            // Check if AudioManager is still valid before playing sounds
+            if (this == null || !isActiveAndEnabled) return;
+
             if (target.team == Hittable.Team.PLAYER)
             {
                 PlaySFX(playerGotHit);
@@ -330,7 +436,8 @@ public class AudioManager : MonoBehaviour
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"[AudioManager] Error in OnDamageDealt: {e.Message}");
+            if (enableDebugLogs)
+                Debug.LogError($"[AudioManager] Error in OnDamageDealt: {e.Message}");
         }
     }
 
@@ -377,66 +484,6 @@ public class AudioManager : MonoBehaviour
         sfxEnabled = PlayerPrefs.GetInt("SFXEnabled", 1) == 1;
 
         Debug.Log($"[AudioManager] Loaded audio settings - SFX Enabled: {sfxEnabled}");
-    }
-
-    #endregion
-
-    #region Test Methods
-
-    [ContextMenu("Test Railgun Sound")]
-    public void TestRailgunSound()
-    {
-        Debug.Log("[AudioManager] === TESTING RAILGUN SOUND ===");
-        Debug.Log($"[AudioManager] isInitialized: {isInitialized}");
-        Debug.Log($"[AudioManager] railgunShoot assigned: {railgunShoot != null}");
-        Debug.Log($"[AudioManager] sfxEnabled: {sfxEnabled}");
-        Debug.Log($"[AudioManager] sfxSource: {sfxSource != null}");
-
-        if (!isInitialized)
-        {
-            Debug.Log("[AudioManager] Not initialized, initializing now");
-            Initialize();
-        }
-
-        if (railgunShoot != null)
-        {
-            PlaySFX(railgunShoot);
-            Debug.Log("[AudioManager] Test: Playing railgun sound directly");
-        }
-        else
-        {
-            Debug.LogError("[AudioManager] Test: Railgun sound not assigned in inspector!");
-        }
-    }
-
-    [ContextMenu("Test Spell Sound")]
-    public void TestSpellSound()
-    {
-        Debug.Log("[AudioManager] === TESTING SPELL SOUND ===");
-        PlaySpellSFX("Railgun");
-    }
-
-    [ContextMenu("List All Assignments")]
-    public void ListAllAssignments()
-    {
-        Debug.Log("[AudioManager] === CURRENT AUDIO ASSIGNMENTS ===");
-        Debug.Log($"buttonHover: {(buttonHover != null ? buttonHover.name : "NULL")}");
-        Debug.Log($"buttonClick: {(buttonClick != null ? buttonClick.name : "NULL")}");
-        Debug.Log($"arcaneBoltShoot: {(arcaneBoltShoot != null ? arcaneBoltShoot.name : "NULL")}");
-        Debug.Log($"arcaneSprayShoot: {(arcaneSprayShoot != null ? arcaneSprayShoot.name : "NULL")}");
-        Debug.Log($"arcaneBlastShoot: {(arcaneBlastShoot != null ? arcaneBlastShoot.name : "NULL")}");
-        Debug.Log($"magicMissileShoot: {(magicMissileShoot != null ? magicMissileShoot.name : "NULL")}");
-        Debug.Log($"railgunShoot: {(railgunShoot != null ? railgunShoot.name : "NULL")}");
-        Debug.Log($"playerGotHit: {(playerGotHit != null ? playerGotHit.name : "NULL")}");
-        Debug.Log($"hitEnemy: {(hitEnemy != null ? hitEnemy.name : "NULL")}");
-    }
-
-    [ContextMenu("Force Initialize")]
-    public void ForceInitialize()
-    {
-        Debug.Log("[AudioManager] FORCE INITIALIZING");
-        isInitialized = false;
-        Initialize();
     }
 
     #endregion
