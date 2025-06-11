@@ -5,11 +5,11 @@ using System.Linq;
 
 public class SpellUI : MonoBehaviour
 {
-    public GameObject      icon;
-    public RectTransform   cooldown;
+    public GameObject icon;
+    public RectTransform cooldown;
     public TextMeshProUGUI manacost;
     public TextMeshProUGUI damage;
-    public Spell           spell;
+    public Spell spell;
 
     private int slotIndex = -1;
     float lastText;
@@ -96,7 +96,7 @@ public class SpellUI : MonoBehaviour
         if (cooldown != null)
         {
             float elapsed = Time.time - spell.lastCast;
-            float pct     = elapsed >= spell.Cooldown ? 0f : 1f - (elapsed / spell.Cooldown);
+            float pct = elapsed >= spell.Cooldown ? 0f : 1f - (elapsed / spell.Cooldown);
             cooldown.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 48f * pct);
         }
 
@@ -104,7 +104,10 @@ public class SpellUI : MonoBehaviour
         if (icon != null)
         {
             var img = icon.GetComponent<Image>();
-            GameManager.Instance.spellIconManager.PlaceSprite(spell.IconIndex, img);
+            if (GameManager.Instance?.spellIconManager != null)
+            {
+                GameManager.Instance.spellIconManager.PlaceSprite(spell.IconIndex, img);
+            }
         }
     }
 
@@ -114,40 +117,110 @@ public class SpellUI : MonoBehaviour
         if (spell != null && icon != null)
         {
             var img = icon.GetComponent<Image>();
-            GameManager.Instance.spellIconManager.PlaceSprite(spell.IconIndex, img);
+            if (GameManager.Instance?.spellIconManager != null)
+            {
+                GameManager.Instance.spellIconManager.PlaceSprite(spell.IconIndex, img);
+            }
         }
 
-        // ★ NEW: update the Tooltip component on this same GameObject (or child):
+        // Update the Tooltip component on this same GameObject (or child):
         var tooltip = GetComponent<Tooltip>();
         if (tooltip != null)
         {
             // build whatever string you want—e.g. display name + modifiers
-            string msg = spell.DisplayName;
+            string msg = spell?.DisplayName ?? "";
             // if you want to list modifiers, you could loop through them here
             tooltip.message = msg;
         }
     }
 
-
     public void DropSpell()
     {
-        PlayerController playerController = Object.FindFirstObjectByType<PlayerController>();
-        if (playerController != null && playerController.spellcaster != null && slotIndex >= 0)
+        try
         {
-            if (slotIndex < playerController.spellcaster.spells.Count)
+            // Validate we have a valid slot index
+            if (slotIndex < 0)
             {
-                Debug.Log($"Dropping spell from slot {slotIndex}: {playerController.spellcaster.spells[slotIndex]?.DisplayName}");
-                playerController.spellcaster.spells[slotIndex] = null;
-                
-                // Clear this UI
-                spell = null;
-                
-                // Immediately deactivate this UI element
-                gameObject.SetActive(false);
-
-                // Update all of the UI slots
-                playerController.UpdateSpellUI();
+                Debug.LogWarning($"[SpellUI] Cannot drop spell - invalid slot index: {slotIndex}");
+                return;
             }
+
+            // Find the player controller safely
+            PlayerController playerController = null;
+
+            // First try to get it from GameManager
+            if (GameManager.Instance?.player != null)
+            {
+                playerController = GameManager.Instance.player.GetComponent<PlayerController>();
+            }
+
+            // If that fails, search for it in the scene
+            if (playerController == null)
+            {
+                playerController = Object.FindFirstObjectByType<PlayerController>();
+            }
+
+            if (playerController == null)
+            {
+                Debug.LogError("[SpellUI] Cannot find PlayerController in scene");
+                return;
+            }
+
+            // Validate spellcaster exists
+            if (playerController.spellcaster == null)
+            {
+                Debug.LogError("[SpellUI] PlayerController has no SpellCaster component");
+                return;
+            }
+
+            // Ensure the spells list is large enough
+            var spells = playerController.spellcaster.spells;
+            if (spells == null)
+            {
+                Debug.LogError("[SpellUI] SpellCaster spells list is null");
+                return;
+            }
+
+            // Extend the list if needed
+            while (spells.Count <= slotIndex)
+            {
+                spells.Add(null);
+            }
+
+            // Now safely drop the spell
+            Debug.Log($"[SpellUI] Dropping spell from slot {slotIndex}: {spells[slotIndex]?.DisplayName ?? "null"}");
+
+            spells[slotIndex] = null;
+
+            // Clear this UI
+            spell = null;
+
+            // Immediately deactivate this UI element
+            gameObject.SetActive(false);
+
+            // Update the UI safely
+            try
+            {
+                // Try SpellUIContainer first
+                SpellUIContainer container = Object.FindFirstObjectByType<SpellUIContainer>();
+                if (container != null)
+                {
+                    container.UpdateSpellUIs();
+                }
+                else
+                {
+                    // Fallback to PlayerController method
+                    playerController.UpdateSpellUI();
+                }
+            }
+            catch (System.Exception uiEx)
+            {
+                Debug.LogError($"[SpellUI] Error updating spell UI: {uiEx.Message}");
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"[SpellUI] Error in DropSpell: {ex.Message}\n{ex.StackTrace}");
         }
     }
 }

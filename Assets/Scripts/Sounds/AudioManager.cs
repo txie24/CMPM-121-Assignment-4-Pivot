@@ -61,6 +61,7 @@ public class AudioManager : MonoBehaviour
     private bool musicEnabled = true;
     private bool sfxEnabled = true;
     private bool isInitialized = false;
+    private bool isQuitting = false;
 
     void Awake()
     {
@@ -76,6 +77,12 @@ public class AudioManager : MonoBehaviour
             Destroy(gameObject);
             return;
         }
+    }
+
+    void OnApplicationQuit()
+    {
+        isQuitting = true;
+        CleanupAudioManager();
     }
 
     void Initialize()
@@ -100,17 +107,17 @@ public class AudioManager : MonoBehaviour
         musicSource.loop = true;
         musicSource.playOnAwake = false;
         musicSource.priority = 64;
-        musicSource.volume = musicVolume * masterVolume;
+        musicSource.volume = musicVolume; // Remove masterVolume multiplication
 
         sfxSource = gameObject.AddComponent<AudioSource>();
         sfxSource.playOnAwake = false;
         sfxSource.priority = 128;
-        sfxSource.volume = sfxVolume * masterVolume;
+        sfxSource.volume = sfxVolume; // Remove masterVolume multiplication
 
         uiSource = gameObject.AddComponent<AudioSource>();
         uiSource.playOnAwake = false;
         uiSource.priority = 200;
-        uiSource.volume = uiVolume * masterVolume;
+        uiSource.volume = uiVolume; // Remove masterVolume multiplication
 
         Debug.Log("[AudioManager] All AudioSources created successfully!");
     }
@@ -146,7 +153,7 @@ public class AudioManager : MonoBehaviour
 
         if (assignedCount == 0)
         {
-            Debug.LogError("[AudioManager] NO SPELL SOUNDS ASSIGNED! Please drag audio clips to the AudioManager inspector!");
+            Debug.LogWarning("[AudioManager] NO SPELL SOUNDS ASSIGNED! Please drag audio clips to the AudioManager inspector!");
         }
     }
 
@@ -183,16 +190,20 @@ public class AudioManager : MonoBehaviour
         catch (System.Exception e)
         {
             // Silently ignore errors during cleanup
-            if (enableDebugLogs)
+            if (enableDebugLogs && !isQuitting)
                 Debug.LogWarning($"[AudioManager] Error unsubscribing from events: {e.Message}");
         }
     }
 
-    void OnDestroy()
+    void CleanupAudioManager()
     {
+        if (isQuitting) return; // Avoid double cleanup
+
+        Debug.Log("[AudioManager] Cleaning up AudioManager");
+
         UnsubscribeFromEvents();
 
-        // Stop all audio sources before destroying
+        // Stop and cleanup audio sources
         if (musicSource != null)
         {
             musicSource.Stop();
@@ -209,12 +220,25 @@ public class AudioManager : MonoBehaviour
             uiSource = null;
         }
 
+        // Clear the singleton reference
         if (_instance == this)
+        {
             _instance = null;
+        }
+
+        isInitialized = false;
+        Debug.Log("[AudioManager] Cleanup complete");
+    }
+
+    void OnDestroy()
+    {
+        CleanupAudioManager();
     }
 
     void OnApplicationPause(bool pauseStatus)
     {
+        if (isQuitting) return;
+
         if (pauseStatus && musicSource != null)
         {
             musicSource.Pause();
@@ -227,6 +251,8 @@ public class AudioManager : MonoBehaviour
 
     void OnApplicationFocus(bool hasFocus)
     {
+        if (isQuitting) return;
+
         if (!hasFocus && musicSource != null)
         {
             musicSource.Pause();
@@ -239,47 +265,52 @@ public class AudioManager : MonoBehaviour
 
     #region Public Methods
 
+    // SFX Methods - Uses SFX Volume Only
     public void PlaySFX(AudioClip clip, float volumeMultiplier = 1f)
     {
-        if (!isInitialized)
+        if (isQuitting || !isInitialized)
         {
-            Debug.LogWarning("[AudioManager] Not initialized yet, initializing now");
-            Initialize();
+            if (!isQuitting && enableDebugLogs) Debug.LogWarning("[AudioManager] Not initialized yet, initializing now");
+            if (!isQuitting) Initialize();
+            if (isQuitting) return;
         }
 
-        if (enableDebugLogs) Debug.Log($"[AudioManager] PlaySFX called - SFX Enabled: {sfxEnabled}, Clip: {(clip != null ? clip.name : "NULL")}");
+        if (enableDebugLogs && !isQuitting) Debug.Log($"[AudioManager] PlaySFX called - SFX Enabled: {sfxEnabled}, Clip: {(clip != null ? clip.name : "NULL")}");
 
         if (!sfxEnabled)
         {
-            if (enableDebugLogs) Debug.Log("[AudioManager] SFX disabled, not playing sound");
+            if (enableDebugLogs && !isQuitting) Debug.Log("[AudioManager] SFX disabled, not playing sound");
             return;
         }
 
         if (clip == null)
         {
-            if (enableDebugLogs) Debug.LogWarning("[AudioManager] ERROR: Clip is null, cannot play sound");
+            if (enableDebugLogs && !isQuitting) Debug.LogWarning("[AudioManager] Clip is null, cannot play sound");
             return;
         }
 
         if (sfxSource == null)
         {
-            Debug.LogError("[AudioManager] sfxSource is null, recreating AudioSources");
-            CreateAudioSources();
-            if (sfxSource == null)
+            if (!isQuitting) Debug.LogError("[AudioManager] sfxSource is null, recreating AudioSources");
+            if (!isQuitting) CreateAudioSources();
+            if (sfxSource == null || isQuitting)
             {
-                Debug.LogError("[AudioManager] Still can't create sfxSource!");
+                if (!isQuitting) Debug.LogError("[AudioManager] Still can't create sfxSource!");
                 return;
             }
         }
 
-        float finalVolume = sfxVolume * masterVolume * volumeMultiplier;
+        // SFX volume is controlled ONLY by sfxVolume (separate from music)
+        float finalVolume = sfxVolume * volumeMultiplier;
         sfxSource.PlayOneShot(clip, finalVolume);
 
-        if (enableDebugLogs) Debug.Log($"[AudioManager] SUCCESS: Played SFX: {clip.name} at volume {finalVolume:F2}");
+        if (enableDebugLogs && !isQuitting) Debug.Log($"[AudioManager] SUCCESS: Played SFX: {clip.name} at volume {finalVolume:F2} ({Mathf.RoundToInt(sfxVolume * 100)}%)");
     }
 
     public void PlaySpellSFX(string spellName)
     {
+        if (isQuitting) return;
+
         if (enableDebugLogs) Debug.Log($"[AudioManager] PlaySpellSFX called with: '{spellName}'");
 
         if (!isInitialized)
@@ -307,50 +338,42 @@ public class AudioManager : MonoBehaviour
             }
             else
             {
-                Debug.LogWarning($"[AudioManager] ERROR: Spell sound for '{baseSpellName}' is assigned but clip is NULL");
+                if (enableDebugLogs) Debug.LogWarning($"[AudioManager] Spell sound for '{baseSpellName}' is assigned but clip is NULL");
             }
         }
         else
         {
-            Debug.LogWarning($"[AudioManager] ERROR: No sound mapping found for spell: {baseSpellName}");
-
-            Debug.Log("[AudioManager] Available spell sounds:");
-            foreach (var kvp in spellSounds)
-            {
-                Debug.Log($"  - '{kvp.Key}' -> {(kvp.Value != null ? kvp.Value.name : "NULL")}");
-            }
+            if (enableDebugLogs) Debug.LogWarning($"[AudioManager] No sound mapping found for spell: {baseSpellName}");
         }
     }
 
-    public void SetSFXEnabled(bool enabled)
-    {
-        sfxEnabled = enabled;
-        Debug.Log($"[AudioManager] SFX enabled set to: {enabled}");
-        SaveAudioSettings();
-    }
-
+    // UI Sound Methods - Uses SFX Volume
     public void PlayButtonClick()
     {
-        PlaySFX(buttonClick);
+        if (isQuitting) return;
+        PlaySFX(buttonClick);  // This will use SFX volume
     }
 
     public void PlayButtonHover()
     {
-        PlaySFX(buttonHover);
+        if (isQuitting) return;
+        PlaySFX(buttonHover);  // This will use SFX volume
     }
 
-    // === NEW MUSIC METHODS ===
+    // Music Methods - Uses Music Volume Only
     public void PlayMainMenuMusic()
     {
+        if (isQuitting) return;
+
         if (!isInitialized)
         {
             Debug.LogWarning("[AudioManager] Not initialized yet, initializing now");
             Initialize();
         }
 
-        if (!musicEnabled || mainMenuMusic == null)
+        if (mainMenuMusic == null)
         {
-            Debug.Log("[AudioManager] Music disabled or mainMenuMusic is null");
+            Debug.Log("[AudioManager] mainMenuMusic is null");
             return;
         }
 
@@ -362,21 +385,23 @@ public class AudioManager : MonoBehaviour
 
         Debug.Log("[AudioManager] Playing Main Menu Music");
         musicSource.clip = mainMenuMusic;
-        musicSource.volume = musicVolume * masterVolume;
+        musicSource.volume = musicVolume;  // Only use music volume
         musicSource.Play();
     }
 
     public void PlayGameplayMusic()
     {
+        if (isQuitting) return;
+
         if (!isInitialized)
         {
             Debug.LogWarning("[AudioManager] Not initialized yet, initializing now");
             Initialize();
         }
 
-        if (!musicEnabled || gameplayMusic == null)
+        if (gameplayMusic == null)
         {
-            Debug.Log("[AudioManager] Music disabled or gameplayMusic is null");
+            Debug.Log("[AudioManager] gameplayMusic is null");
             return;
         }
 
@@ -388,30 +413,52 @@ public class AudioManager : MonoBehaviour
 
         Debug.Log("[AudioManager] Playing Gameplay Music");
         musicSource.clip = gameplayMusic;
-        musicSource.volume = musicVolume * masterVolume;
+        musicSource.volume = musicVolume;  // Only use music volume
         musicSource.Play();
     }
 
     public void StopMusic()
     {
-        if (musicSource != null && musicSource.isActiveAndEnabled)
+        if (musicSource != null && musicSource.isActiveAndEnabled && !isQuitting)
         {
             Debug.Log("[AudioManager] Stopping music");
             musicSource.Stop();
         }
     }
 
+    // Volume Update Method
+    public void UpdateMusicVolume()
+    {
+        if (musicSource != null && musicSource.isActiveAndEnabled && !isQuitting)
+        {
+            // Music volume is controlled ONLY by musicVolume (not masterVolume for separation)
+            musicSource.volume = musicVolume;
+            Debug.Log($"[AudioManager] Updated music volume to: {musicSource.volume:F2} ({Mathf.RoundToInt(musicVolume * 100)}%)");
+        }
+    }
+
+    // Enable/Disable Methods
     public void SetMusicEnabled(bool enabled)
     {
         musicEnabled = enabled;
         Debug.Log($"[AudioManager] Music enabled set to: {enabled}");
 
-        if (!enabled && musicSource != null)
+        if (!enabled && musicSource != null && !isQuitting)
         {
             musicSource.Stop();
+            Debug.Log("[AudioManager] Music disabled - stopped music");
         }
+        else if (enabled)
+        {
+            Debug.Log("[AudioManager] Music enabled");
+            // Optionally restart music here if needed
+        }
+    }
 
-        SaveAudioSettings();
+    public void SetSFXEnabled(bool enabled)
+    {
+        sfxEnabled = enabled;
+        Debug.Log($"[AudioManager] SFX enabled set to: {enabled}");
     }
 
     #endregion
@@ -420,6 +467,8 @@ public class AudioManager : MonoBehaviour
 
     void OnDamageDealt(Vector3 position, Damage damage, Hittable target)
     {
+        if (isQuitting) return;
+
         try
         {
             // Check if AudioManager is still valid before playing sounds
@@ -427,16 +476,16 @@ public class AudioManager : MonoBehaviour
 
             if (target.team == Hittable.Team.PLAYER)
             {
-                PlaySFX(playerGotHit);
+                PlaySFX(playerGotHit);  // Uses SFX volume
             }
             else if (target.team == Hittable.Team.MONSTERS)
             {
-                PlaySFX(hitEnemy);
+                PlaySFX(hitEnemy);  // Uses SFX volume
             }
         }
         catch (System.Exception e)
         {
-            if (enableDebugLogs)
+            if (enableDebugLogs && !isQuitting)
                 Debug.LogError($"[AudioManager] Error in OnDamageDealt: {e.Message}");
         }
     }
@@ -465,6 +514,8 @@ public class AudioManager : MonoBehaviour
 
     void SaveAudioSettings()
     {
+        if (isQuitting) return;
+
         PlayerPrefs.SetFloat("MasterVolume", masterVolume);
         PlayerPrefs.SetFloat("MusicVolume", musicVolume);
         PlayerPrefs.SetFloat("SFXVolume", sfxVolume);
@@ -483,7 +534,7 @@ public class AudioManager : MonoBehaviour
         musicEnabled = PlayerPrefs.GetInt("MusicEnabled", 1) == 1;
         sfxEnabled = PlayerPrefs.GetInt("SFXEnabled", 1) == 1;
 
-        Debug.Log($"[AudioManager] Loaded audio settings - SFX Enabled: {sfxEnabled}");
+        Debug.Log($"[AudioManager] Loaded audio settings - Music: {Mathf.RoundToInt(musicVolume * 100)}%, SFX: {Mathf.RoundToInt(sfxVolume * 100)}%");
     }
 
     #endregion
