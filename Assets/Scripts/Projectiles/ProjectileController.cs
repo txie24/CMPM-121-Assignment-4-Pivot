@@ -46,7 +46,7 @@ public class ProjectileController : MonoBehaviour
         if (collision.gameObject.CompareTag("projectile"))
             return;
 
-        // if we hit a unit (enemy or player), always invoke damage
+        // === UNIT HIT ===
         if (collision.gameObject.CompareTag("unit"))
         {
             var ec = collision.gameObject.GetComponent<EnemyController>();
@@ -59,16 +59,17 @@ public class ProjectileController : MonoBehaviour
                     OnHit.Invoke(pc.hp, transform.position);
             }
 
-            // destroy on unit‐hit only if not piercing
             if (!piercing)
                 Destroy(gameObject);
             return;
         }
 
-        // NON‐UNIT collision (walls, scenery):
-        // only skip destruction if ignoreEnvironment is true
+        // === MISS (Non-unit hit) ===
         if (!ignoreEnvironment)
-            Destroy(gameObject);
+        {
+            AchievementManager.Instance?.RecordMiss();
+            Destroy(gameObject); 
+        }
     }
 
 

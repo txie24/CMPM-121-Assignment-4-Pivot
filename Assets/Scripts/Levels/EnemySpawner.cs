@@ -1,4 +1,6 @@
-﻿using System;
+﻿// File: Assets/Scripts/EnemySpawner.cs
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,6 +43,11 @@ public class EnemySpawner : MonoBehaviour
         { 10, new Vector3(271f, 225f, 0f) },
     };
 
+    void Awake()
+    {
+        Instance = this;
+    }
+
     void Start()
     {
         for (int i = 0; i < GameManager.Instance.levelDefs.Count; i++)
@@ -53,14 +60,10 @@ public class EnemySpawner : MonoBehaviour
             ctrl.spawner = this;
             ctrl.SetLevel(lvl.name);
 
-            go.GetComponent<Button>()
-              .onClick.AddListener(ctrl.StartLevel);
+            go.GetComponent<Button>().onClick.AddListener(ctrl.StartLevel);
         }
     }
-    void Awake()
-    {
-        Instance = this;
-    }
+
     public void StartLevel(string levelName)
     {
         level_selector.gameObject.SetActive(false);
@@ -85,16 +88,10 @@ public class EnemySpawner : MonoBehaviour
         int idx = PlayerClass.GetSpriteIndex(cls);
 
         var spriteGO = GameManager.Instance.player.transform.Find("player sprite");
-        if (spriteGO == null)
-        {
-            Debug.LogError("StartLevel: could not find child named 'player sprite'");
-        }
-        else
+        if (spriteGO != null)
         {
             var sr = spriteGO.GetComponent<SpriteRenderer>();
-            if (sr == null)
-                Debug.LogError("StartLevel: 'player sprite' has no SpriteRenderer");
-            else
+            if (sr != null)
                 sr.sprite = GameManager.Instance.playerSpriteManager.Get(idx);
         }
 
@@ -137,6 +134,9 @@ public class EnemySpawner : MonoBehaviour
             GameManager.Instance.playerWon = true;
             GameManager.Instance.IsPlayerDead = false;
             GameManager.Instance.state = GameManager.GameState.GAMEOVER;
+
+            AchievementManager.Instance?.CheckHarryPotter();
+
             yield break;
         }
 
@@ -211,7 +211,6 @@ public class EnemySpawner : MonoBehaviour
             {
                 Vector3 spawnPos;
 
-                // ⬇️ CUSTOM SPAWN POSITION CHECK
                 if (customWavePositions.TryGetValue(currentWave, out Vector3 customPos))
                 {
                     spawnPos = FindValidSpawnPosition(customPos);
@@ -296,5 +295,4 @@ public class EnemySpawner : MonoBehaviour
         currentWave = wave;
         StartCoroutine(SpawnWave());
     }
-
 }

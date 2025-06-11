@@ -66,6 +66,7 @@ public class GameManager
             totalEnemiesKilled++;
             // now legal because OnEnemyKilled is a delegate, not an event
             EnemySpawner.OnEnemyKilled?.Invoke(e);
+
         }
     }
 
