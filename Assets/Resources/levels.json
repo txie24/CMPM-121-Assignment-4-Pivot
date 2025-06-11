@@ -99,7 +99,8 @@
       ]
     },
     {
-      "name": "Endless",
+      "name": "Hard",
+      "waves": 10,
       "spawns": [
         {
           "enemy": "zombie",
